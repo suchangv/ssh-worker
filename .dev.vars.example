@@ -1,0 +1,4 @@
+# 32-byte base64 key: openssl rand -base64 32
+APP_SECRET=
+# 只对 localhost 生效，生产域名永远走 Cloudflare Access
+DEV_AUTH_BYPASS=true

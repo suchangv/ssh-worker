@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="SSH Worker">
+	<defs>
+		<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#4bb5c9" />
+			<stop offset="1" stop-color="#17606d" />
+		</linearGradient>
+	</defs>
+	<rect width="64" height="64" rx="16" fill="url(#g)" />
+	<path d="M20 24l8 8-8 8" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+	<path d="M34 40h12" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+</svg>

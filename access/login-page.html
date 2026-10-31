@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light" />
+		<title>登录 · SSH Worker</title>
+		<style>
+			:root {
+				--bg: #f4f8f9;
+				--card: #ffffff;
+				--line: #dde9eb;
+				--text: #0f2528;
+				--muted: #55747a;
+				--accent: #1f7889;
+			}
+			* { box-sizing: border-box; }
+			html, body { height: 100%; }
+			body {
+				margin: 0;
+				display: grid;
+				place-items: center;
+				padding: 24px;
+				background:
+					radial-gradient(900px 420px at 12% -10%, rgba(37, 130, 146, 0.16), transparent 62%),
+					radial-gradient(760px 380px at 100% 0%, rgba(75, 181, 201, 0.12), transparent 58%),
+					var(--bg);
+				color: var(--text);
+				font: 15px/1.55 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			.card {
+				width: min(420px, 100%);
+				background: var(--card);
+				border: 1px solid var(--line);
+				border-radius: 18px;
+				padding: 30px 28px 24px;
+				box-shadow: 0 40px 80px -50px rgba(9, 45, 52, 0.65);
+			}
+			.brand { display: flex; align-items: center; gap: 12px; }
+			.mark {
+				width: 40px; height: 40px; border-radius: 12px;
+				display: grid; place-items: center;
+				background: linear-gradient(160deg, #4bb5c9, #17606d);
+				box-shadow: 0 12px 24px -14px rgba(37, 130, 146, 0.9);
+				color: #fff; font: 700 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			.brand-text { display: flex; flex-direction: column; line-height: 1.25; }
+			.brand-text strong { font-size: 16px; font-weight: 650; }
+			.brand-text span { font-size: 12px; color: var(--muted); }
+			h1 { margin: 22px 0 6px; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
+			.lead { margin: 0 0 18px; font-size: 13px; color: var(--muted); }
+			.hint {
+				margin: 16px 0 0; padding: 12px 14px;
+				background: #f1f8f9; border: 1px solid #d5e8eb; border-radius: 10px;
+				font-size: 12px; color: var(--muted); line-height: 1.6;
+			}
+			.hint b { color: var(--text); font-weight: 600; }
+			.message {
+				margin: 0 0 14px; padding: 10px 12px; border-radius: 9px;
+				background: #fdf1ef; border: 1px solid #eccac4; color: #b8412f; font-size: 12.5px;
+			}
+			.foot {
+				margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line);
+				display: flex; align-items: center; justify-content: space-between;
+				font-size: 11.5px; color: #7e999f;
+			}
+			.foot a { color: var(--accent); text-decoration: none; }
+			/* Best-effort styling of Cloudflare's sign-in control (light DOM only). */
+			cf-access-authbox { display: block; margin: 6px 0 2px; }
+			cf-access-authbox .AuthServiceLogin-row .Button,
+			cf-access-authbox .Button {
+				border-radius: 10px;
+				border-color: var(--line);
+				padding: 12px 14px;
+				font-weight: 550;
+			}
+			cf-access-authbox .Button:hover { border-color: #1f7889; background: #f4fbfc; }
+		</style>
+	</head>
+	<body>
+		<main class="card">
+			<div class="brand">
+				<span class="mark">$</span>
+				<div class="brand-text">
+					<strong>SSH Worker</strong>
+					<span>{{ org.name }}</span>
+				</div>
+			</div>
+
+			<h1>登录 {{ app_name }}</h1>
+			<p class="lead">使用 Google 账号验证身份后即可进入面板。</p>
+
+			{% if message.text.size > 0 %}
+			<p class="message" role="status">{{ message.text }}</p>
+			{% endif %}
+
+			<cf-access-authbox></cf-access-authbox>
+
+			<p class="hint">
+				仅限授权账号访问。登录状态由 <b>Cloudflare Access</b> 维护，退出后需重新验证。
+			</p>
+
+			<div class="foot">
+				<span>Protected by Cloudflare Access</span>
+				<a href="https://{{ org.auth_domain }}" target="_blank" rel="noreferrer">{{ org.auth_domain }}</a>
+			</div>
+		</main>
+	</body>
+</html>

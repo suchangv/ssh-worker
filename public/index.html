@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+		<meta name="color-scheme" content="light" />
+		<title>SSH Worker · VPS 控制台</title>
+		<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23258292'/%3E%3Cpath d='M8 11l5 5-5 5M16 21h8' stroke='%23e8f4f6' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+		<link rel="stylesheet" href="/styles.css?v=affcc5d82f" />
+	</head>
+	<body>
+		<!-- ---------------------------------------------------------- list -->
+		<div id="view-list">
+			<header class="topbar">
+				<div class="brand">
+					<span class="brand-mark">$</span>
+					<span class="brand-name">SSH<b>Worker</b></span>
+				</div>
+				<div class="topbar-right">
+					<span class="pill" id="identity" title="Cloudflare Access 身份">…</span>
+					<button class="btn ghost" id="refresh" title="刷新列表">刷新</button>
+					<button class="btn ghost hidden" id="logout" title="退出 Cloudflare Access 登录">退出</button>
+				</div>
+			</header>
+
+			<main class="page">
+				<div class="page-head">
+					<div>
+						<h1>服务器</h1>
+						<p class="sub" id="summary">加载中…</p>
+					</div>
+					<button class="btn primary" id="add">+ 添加服务器</button>
+				</div>
+
+				<div class="grid" id="list" aria-live="polite"></div>
+
+				<div class="empty hidden" id="empty">
+					<div class="empty-icon">⌘</div>
+					<h2>还没有服务器</h2>
+					<p>添加一台 Linux VPS，凭据会用 AES-256-GCM 加密后存进 Workers KV。</p>
+					<button class="btn primary" id="add2">添加第一台服务器</button>
+				</div>
+			</main>
+		</div>
+
+		<!-- ------------------------------------------------------ terminal -->
+		<section class="terminal-view hidden" id="view-terminal">
+			<header class="term-head">
+				<div class="term-left">
+					<a class="btn ghost sm back" id="term-back" href="/" data-link title="返回列表（Esc）">← 返回</a>
+					<div class="term-id">
+						<strong id="term-name">session</strong>
+						<span class="term-addr" id="term-addr"></span>
+					</div>
+				</div>
+
+				<div class="term-metrics">
+					<span class="metric" id="metric-state"><span class="dot" id="term-dot"></span><span id="term-status">连接中…</span></span>
+					<span class="metric" title="SSH 握手 + 认证耗时">握手 <b id="metric-handshake">—</b></span>
+					<span class="metric" title="浏览器 ↔ Cloudflare 边缘的往返延迟">RTT <b id="metric-rtt">—</b></span>
+					<span class="metric" title="会话时长">⏱ <b id="metric-timer">00:00:00</b></span>
+				</div>
+
+				<div class="term-actions">
+					<button class="btn ghost sm" id="term-files" title="显示/隐藏文件树">文件</button>
+					<button class="btn ghost sm" id="term-font-dec" title="缩小字号">A−</button>
+					<button class="btn ghost sm" id="term-font-inc" title="放大字号">A+</button>
+					<button class="btn ghost sm" id="term-copy" title="复制选中内容">复制</button>
+					<button class="btn ghost sm" id="term-paste" title="粘贴剪贴板">粘贴</button>
+					<button class="btn ghost sm" id="term-reconnect" title="重新建立会话">重连</button>
+					<button class="btn ghost sm" id="term-close" title="断开并返回（Esc）">断开</button>
+				</div>
+			</header>
+
+			<div class="term-main" id="term-main">
+				<aside class="files-panel" id="files-panel" aria-label="文件管理器">
+					<div class="files-head">
+						<span class="files-title">文件</span>
+						<div class="files-tools">
+							<button class="btn ghost sm" id="files-refresh" title="刷新目录树">⟳</button>
+							<button class="btn ghost sm" id="files-collapse" title="收起全部">⌃</button>
+						</div>
+					</div>
+					<button class="files-root" id="files-root" title="复制根路径">
+						<span class="files-root-label" id="files-root-label">~</span>
+						<span class="files-root-copy">复制</span>
+					</button>
+					<div class="files-tree" id="files-tree">
+						<div class="files-empty">连接后加载…</div>
+					</div>
+				</aside>
+				<div class="term-body" id="term-body"></div>
+			</div>
+
+			<footer class="term-foot">
+				<span class="term-foot-hint"><kbd>Esc</kbd> 返回 · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> 粘贴 · 选中后点「复制」</span>
+				<span class="term-foot-meta" id="term-meta"></span>
+			</footer>
+		</section>
+
+		<!-- add / edit -->
+		<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+			<form class="sheet" id="form">
+				<div class="sheet-head">
+					<h2 id="modal-title">添加服务器</h2>
+					<button type="button" class="btn icon" id="close-modal" aria-label="关闭">✕</button>
+				</div>
+
+				<input type="hidden" id="f-id" />
+
+				<div class="row two">
+					<label>名称
+						<input id="f-name" required maxlength="64" placeholder="prod-web-1" autocomplete="off" />
+					</label>
+					<label>标签 / 备注
+						<input id="f-note" maxlength="500" placeholder="东京 · 2C2G" autocomplete="off" />
+					</label>
+				</div>
+
+				<div class="row two">
+					<label>主机
+						<input id="f-host" required maxlength="253" placeholder="203.0.113.10 或 vps.example.com" autocomplete="off" spellcheck="false" />
+					</label>
+					<label>端口
+						<input id="f-port" type="number" min="1" max="65535" value="22" required />
+					</label>
+				</div>
+
+				<div class="row two">
+					<label>用户名
+						<input id="f-username" required maxlength="64" placeholder="root" autocomplete="off" spellcheck="false" />
+					</label>
+					<label>到期时间
+						<input id="f-expires" maxlength="10" placeholder="2026-12-31" inputmode="numeric" autocomplete="off" spellcheck="false" />
+						<span class="hint">yyyy-MM-dd，留空表示不记录</span>
+					</label>
+				</div>
+
+				<div class="row two">
+					<label class="grow">认证方式
+						<select id="f-auth">
+							<option value="password">密码</option>
+							<option value="key">私钥</option>
+						</select>
+					</label>
+					<label class="grow" id="passphrase-wrap" hidden>私钥口令（可选）
+						<input id="f-passphrase" type="password" autocomplete="new-password" />
+					</label>
+				</div>
+
+				<label>
+					<span id="credential-label">密码</span>
+					<textarea id="f-credential" rows="3" spellcheck="false" autocomplete="off" placeholder="留空表示保持不变"></textarea>
+					<span class="hint" id="credential-hint">密码只用于建立 SSH 连接，加密后存储。</span>
+				</label>
+
+				<div class="sheet-foot">
+					<span class="hint danger" id="form-error"></span>
+					<div class="spacer"></div>
+					<button type="button" class="btn ghost" id="cancel">取消</button>
+					<button type="submit" class="btn primary" id="save">保存</button>
+				</div>
+			</form>
+		</div>
+
+		<!-- probe output -->
+		<div class="modal hidden" id="probe-modal" role="dialog" aria-modal="true">
+			<div class="sheet">
+				<div class="sheet-head">
+					<h2>连接测试</h2>
+					<button type="button" class="btn icon" id="close-probe" aria-label="关闭">✕</button>
+				</div>
+				<pre class="probe-output" id="probe-output">检测中…</pre>
+				<ul class="probe-hints hidden" id="probe-hints"></ul>
+			</div>
+		</div>
+
+		<!-- file preview -->
+		<div class="modal hidden" id="preview-modal" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+			<div class="sheet preview-sheet">
+				<div class="sheet-head">
+					<h2 id="preview-title">预览</h2>
+					<div class="preview-actions">
+						<span class="hint" id="preview-meta"></span>
+						<button type="button" class="btn ghost sm" id="preview-download">下载</button>
+						<button type="button" class="btn icon" id="close-preview" aria-label="关闭">✕</button>
+					</div>
+				</div>
+				<pre class="preview-text hidden" id="preview-text"></pre>
+				<div class="preview-image hidden" id="preview-image-wrap"><img id="preview-image" alt="预览" /></div>
+			</div>
+		</div>
+
+		<div class="toasts" id="toasts"></div>
+
+		<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.js"></script>
+		<script src="/app.js?v=d285299ba9"></script>
+	</body>
+</html>

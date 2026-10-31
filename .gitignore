@@ -1,0 +1,12 @@
+
+.cloudflare/
+.dev.vars
+.dev.vars*
+!.dev.vars.example
+.dist/
+.dist2/
+!.env.example
+.env.production
+.env.deploy
+node_modules/
+.wrangler/
