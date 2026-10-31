@@ -4,8 +4,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "sh -c 'set -a; [ -f .env.deploy ] && . ./.env.deploy; set +a; cf dev'",
-		"deploy": "sh -c 'set -a; [ -f .env.deploy ] && . ./.env.deploy; set +a; cf deploy'",
+		"dev": "sh scripts/dev.sh",
+		"deploy": "sh scripts/deploy.sh",
 		"check": "tsc --noEmit",
 		"postinstall": "node scripts/patch-ssh2.mjs"
 	},
